@@ -14,7 +14,6 @@ This is a sample project that demonstrates how to set up a MongoDB replica set u
 3. Create authentication key for replicaset
 ```
 openssl rand -base64 756 > <path>
-
 ```
 4. Set file owner as 999:999
 ```
