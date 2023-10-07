@@ -1,0 +1,91 @@
+services:
+
+  mongo:
+    container_name: mongo_master
+    hostname: mongo
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - ./key:/etc/key
+    expose:
+      - 27017
+    ports:
+      - 27090:27017
+    networks:
+      - replicaset
+    command: mongod --replSet rs0 --auth --keyFile /etc/key
+    
+  mongo1:
+    container_name: mongo_slave_1
+    hostname: mongo1
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - ./key:/etc/key
+    expose:
+      - 27017
+    ports:
+      - 27091:27017
+    networks:
+      - replicaset
+    command: mongod --replSet rs0 --auth --keyFile /etc/key
+
+
+  mongo2:
+    container_name: mongo_slave_2
+    hostname: mongo2
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - ./key:/etc/key
+    expose:
+      - 27017
+    ports:
+      - 27092:27017
+    networks:
+      - replicaset
+    command: mongod --replSet rs0 --auth --keyFile /etc/key
+
+  
+  mongoinit:
+    container_name: mongo_init
+    hostname: mongo_init
+    image: mongo
+    volumes:
+      - ./key:/etc/key
+    restart: "no"
+    networks:
+      - replicaset
+    depends_on:
+      - mongo
+      - mongo1
+      - mongo2
+    command: >
+      mongosh --host mongo:27017 -u root -p example --eval 
+      '
+        rs.initiate(
+          {
+            _id: "rs0",
+            members: [
+              { _id: 0, host : "mongo:27017" },
+              { _id: 1, host : "mongo1:27017" },
+              { _id: 2, host : "mongo2:27017" }
+            ]
+          }
+        )
+
+      '
+
+networks:
+  replicaset:
+    driver: bridge
+  
